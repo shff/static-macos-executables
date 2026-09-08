@@ -4,15 +4,30 @@ on: workflow_dispatch
 jobs:
   build:
     runs-on: macos-latest
+    permissions:
+      contents: write
     env:
+      FFMPEG_VERSION: 9.0.1
       CFLAGS: -Os -no-pie -Wno-deprecated-declarations -Wno-implicit-function-declaration
       CXXFLAGS: -Os
       LDFLAGS: -all-static -framework Foundation -framework Cocoa -framework VideoToolbox
       PREFIX: /Users/runner/work/static-macos-executables/static-macos-executables/workspace
     steps:
       - run: git clone https://github.com/markus-perl/ffmpeg-build-script.git
-      - run: cd ffmpeg-build-script && ./build-ffmpeg --build
-      - uses: actions/upload-artifact@v2
+      - run: cd ffmpeg-build-script && ./build-ffmpeg --build --ffmpeg-version="$FFMPEG_VERSION"
+      - uses: actions/upload-artifact@v4
         with:
           name: ffmpeg
           path: ffmpeg-build-script/workspace/bin/ffmpeg
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="ffmpeg-$FFMPEG_VERSION"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" ffmpeg-build-script/workspace/bin/ffmpeg --clobber
+          else
+            gh release create "$tag" ffmpeg-build-script/workspace/bin/ffmpeg \
+              --title "FFmpeg $FFMPEG_VERSION" \
+              --generate-notes
+          fi
