@@ -10,7 +10,6 @@ jobs:
       IMAGEMAGICK_VERSION: 7.1.2-31
       CFLAGS: -Os
       CXXFLAGS: -Os
-      LDFLAGS: -all_static
     steps:
       - run: git clone --depth 1 --branch "$IMAGEMAGICK_VERSION" https://github.com/ImageMagick/ImageMagick.git ImageMagick
       - run: cd ImageMagick && ./configure --disable-shared --enable-static --without-modules --without-magick-plus-plus --without-perl --without-x --disable-openmp
